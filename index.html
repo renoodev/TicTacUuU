@@ -1,44 +1,58 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>⚡ Renoodev AI Image Editor</title>
+<meta charset="UTF-8">
+<title>⚡RenodevGambarAi</title>
 
 <style>
 
 body{
-font-family: Arial;
-background:#0b0f19;
+background:#0f172a;
+font-family:Arial;
 color:white;
 text-align:center;
-padding:40px;
+padding:30px;
 }
 
 h1{
-font-size:32px;
-margin-bottom:10px;
+font-size:34px;
+margin-bottom:5px;
+}
+
+.subtitle{
+color:#94a3b8;
+margin-bottom:30px;
 }
 
 .container{
-background:#121826;
+max-width:600px;
+margin:auto;
+background:#1e293b;
 padding:30px;
 border-radius:15px;
-max-width:500px;
-margin:auto;
-box-shadow:0 0 20px rgba(0,0,0,0.6);
+box-shadow:0 0 20px rgba(0,0,0,0.5);
 }
 
-input[type=file]{
-margin:20px;
+.upload{
+border:2px dashed #475569;
+padding:40px;
+border-radius:10px;
+cursor:pointer;
+margin-bottom:20px;
+}
+
+.upload:hover{
+background:#334155;
 }
 
 button{
-padding:12px 20px;
-margin:5px;
+padding:12px 18px;
 border:none;
 border-radius:8px;
 background:#22c55e;
 color:white;
 font-weight:bold;
+margin:5px;
 cursor:pointer;
 }
 
@@ -46,12 +60,12 @@ button:hover{
 background:#16a34a;
 }
 
-input[type=text]{
+input{
 padding:10px;
-width:80%;
 border-radius:8px;
 border:none;
 margin-top:10px;
+width:80%;
 }
 
 img{
@@ -61,9 +75,14 @@ border-radius:10px;
 }
 
 .loading{
+display:none;
 margin-top:15px;
 color:#22c55e;
-display:none;
+}
+
+.download{
+margin-top:15px;
+background:#3b82f6;
 }
 
 </style>
@@ -72,21 +91,29 @@ display:none;
 <body>
 
 <h1>⚡ Renoodev AI Image Editor</h1>
-<p>Edit gambar dengan AI</p>
+<div class="subtitle">Remove background • Enhance • Expand • Add Object</div>
 
 <div class="container">
 
-<input type="file" id="imageInput">
+<div class="upload" onclick="fileInput.click()">
+Klik atau drag gambar kesini
+<br><br>
+<input type="file" id="fileInput" hidden>
+</div>
 
-<br>
+<img id="preview">
+
+<div>
 
 <button onclick="removeBG()">Remove Background</button>
 <button onclick="enhance()">Enhance</button>
 <button onclick="expand()">Expand</button>
 
-<br><br>
+</div>
 
-<input type="text" id="prompt" placeholder="Tambahkan objek...">
+<br>
+
+<input id="prompt" placeholder="Tambahkan objek (contoh: cewek anime, mobil sport)">
 
 <br>
 
@@ -94,7 +121,9 @@ display:none;
 
 <div class="loading" id="loading">⏳ AI sedang memproses...</div>
 
-<img id="preview">
+<br>
+
+<button class="download" onclick="downloadImage()">Download</button>
 
 </div>
 
@@ -102,9 +131,26 @@ display:none;
 
 const api = "https://renoodev.vercel.app/api/ai"
 
-function getImage(){
+const fileInput = document.getElementById("fileInput")
+const preview = document.getElementById("preview")
 
-const file = document.getElementById("imageInput").files[0]
+fileInput.addEventListener("change", () => {
+
+const file = fileInput.files[0]
+
+const reader = new FileReader()
+
+reader.onload = e=>{
+preview.src = e.target.result
+}
+
+reader.readAsDataURL(file)
+
+})
+
+function getFile(){
+
+const file = fileInput.files[0]
 
 if(!file){
 alert("Upload gambar dulu")
@@ -115,32 +161,19 @@ return file
 
 }
 
-function previewImage(file){
+async function send(type,prompt=""){
 
-const reader = new FileReader()
-
-reader.onload = function(e){
-document.getElementById("preview").src = e.target.result
-}
-
-reader.readAsDataURL(file)
-
-}
-
-async function sendToAPI(type){
-
-const file = getImage()
+const file = getFile()
 
 if(!file) return
-
-previewImage(file)
 
 document.getElementById("loading").style.display="block"
 
 const formData = new FormData()
 
-formData.append("image", file)
-formData.append("type", type)
+formData.append("image",file)
+formData.append("type",type)
+formData.append("prompt",prompt)
 
 const res = await fetch(api,{
 method:"POST",
@@ -152,7 +185,7 @@ const data = await res.json()
 document.getElementById("loading").style.display="none"
 
 if(data.image){
-document.getElementById("preview").src=data.image
+preview.src=data.image
 }else{
 alert("AI gagal memproses")
 }
@@ -160,15 +193,15 @@ alert("AI gagal memproses")
 }
 
 function removeBG(){
-sendToAPI("removebg")
+send("removebg")
 }
 
 function enhance(){
-sendToAPI("enhance")
+send("enhance")
 }
 
 function expand(){
-sendToAPI("expand")
+send("expand")
 }
 
 function addObject(){
@@ -180,7 +213,18 @@ alert("Isi objek dulu")
 return
 }
 
-sendToAPI(prompt)
+send("addobject",prompt)
+
+}
+
+function downloadImage(){
+
+const link=document.createElement("a")
+
+link.href=preview.src
+link.download="renoodev-ai.png"
+
+link.click()
 
 }
 
