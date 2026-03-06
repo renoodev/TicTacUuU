@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Background Remover - 100% Gratis</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #050505; color: white; font-family: sans-serif; }
+        .checkerboard {
+            background-image: linear-gradient(45deg, #111 25%, transparent 25%), linear-gradient(-45deg, #111 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #111 75%), linear-gradient(-45deg, transparent 75%, #111 75%);
+            background-size: 20px 20px;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center p-5">
+
+    <header class="w-full max-w-md text-center mb-8">
+        <h1 class="text-3xl font-black text-blue-500">BEBAS API</h1>
+        <p class="text-gray-400 text-sm mt-2 font-medium underline decoration-blue-500">100% Gratis & Tanpa Limit</p>
+    </header>
+
+    <main class="w-full max-w-md space-y-6">
+        <!-- Kotak Upload -->
+        <div id="drop-zone" class="aspect-square w-full rounded-3xl border-2 border-dashed border-zinc-800 checkerboard flex flex-col items-center justify-center relative overflow-hidden group">
+            <input type="file" id="upload" class="hidden" accept="image/*">
+            
+            <div id="start-view" class="text-center cursor-pointer p-10" onclick="document.getElementById('upload').click()">
+                <i class="fa-solid fa-cloud-arrow-up text-5xl text-blue-600 mb-4"></i>
+                <p class="font-bold">Ketuk untuk Pilih Foto</p>
+                <p class="text-xs text-zinc-500 mt-2">Proses dilakukan di HP Anda sendiri (Privat & Aman)</p>
+            </div>
+
+            <div id="preview-container" class="hidden absolute inset-0 bg-zinc-900 flex items-center justify-center p-4">
+                <img id="image-display" class="max-w-full max-h-full shadow-2xl rounded-lg">
+            </div>
+
+            <!-- Loading State -->
+            <div id="loader" class="hidden absolute inset-0 bg-black/80 backdrop-blur-md z-50 flex flex-col items-center justify-center">
+                <div class="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mb-4"></div>
+                <p id="load-text" class="text-sm font-bold text-blue-400">Menyiapkan Mesin AI...</p>
+                <p class="text-[10px] text-zinc-500 mt-2 px-10 text-center">Hanya pertama kali (±10MB data model akan diunduh)</p>
+            </div>
+        </div>
+
+        <div class="flex flex-col gap-4">
+            <button id="btn-process" disabled class="w-full bg-blue-600 disabled:bg-zinc-800 disabled:text-zinc-600 py-4 rounded-2xl font-bold transition-all shadow-lg shadow-blue-900/20">
+                Hapus Background Sekarang
+            </button>
+            <button id="btn-download" class="hidden w-full bg-white text-black py-4 rounded-2xl font-bold flex items-center justify-center gap-2">
+                <i class="fa-solid fa-download"></i> Simpan Hasil (PNG)
+            </button>
+        </div>
+        
+        <div class="bg-zinc-900/50 p-4 rounded-2xl border border-zinc-800">
+            <p class="text-[11px] text-zinc-400 leading-relaxed text-center italic">
+                Sistem ini tidak butuh API. AI berjalan langsung di browser pengunjung menggunakan model <span class="text-blue-500">RMBG-1.4</span>. 
+                Sangat cocok untuk dipasang di GitHub Pages tanpa biaya bulanan.
+            </p>
+        </div>
+    </main>
+
+    <!-- Menggunakan Transformers.js secara CDN -->
+    <script type="module">
+        import { pipeline, env } from 'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.1';
+
+        // Konfigurasi agar tidak butuh local path
+        env.allowLocalModels = false;
+
+        const upload = document.getElementById('upload');
+        const imgDisplay = document.getElementById('image-display');
+        const loader = document.getElementById('loader');
+        const btnProcess = document.getElementById('btn-process');
+        const btnDownload = document.getElementById('btn-download');
+        const loadText = document.getElementById('load-text');
+
+        let segmenter = null;
+        let originalImage = null;
+
+        // Load model AI saat halaman dibuka
+        async function initAI() {
+            try {
+                loadText.innerText = "Mengunduh Otak AI...";
+                loader.classList.remove('hidden');
+                // Menggunakan model penghapus background yang ringan
+                segmenter = await pipeline('image-segmentation', 'Xenova/remove-background');
+                loader.classList.add('hidden');
+                console.log("AI Ready!");
+            } catch (e) {
+                alert("Gagal memuat AI. Pastikan koneksi internet stabil.");
+            }
+        }
+
+        initAI();
+
+        upload.onchange = (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                originalImage = URL.createObjectURL(file);
+                imgDisplay.src = originalImage;
+                document.getElementById('start-view').classList.add('hidden');
+                document.getElementById('preview-container').classList.remove('hidden');
+                btnProcess.disabled = false;
+                btnDownload.classList.add('hidden');
+            }
+        };
+
+        btnProcess.onclick = async () => {
+            if (!segmenter || !originalImage) return;
+
+            loader.classList.remove('hidden');
+            loadText.innerText = "AI Sedang Berpikir...";
+
+            try {
+                const result = await segmenter(originalImage);
+                
+                // Result adalah canvas/mask
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                
+                // Ubah hasil AI ke format gambar transparan
+                const processedImg = await imgToBlob(result.mask);
+                const url = URL.createObjectURL(processedImg);
+                
+                imgDisplay.src = url;
+                btnDownload.onclick = () => {
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = "no-bg.png";
+                    a.click();
+                };
+
+                btnProcess.classList.add('hidden');
+                btnDownload.classList.remove('hidden');
+            } catch (err) {
+                alert("Error: " + err.message);
+            } finally {
+                loader.classList.add('hidden');
+            }
+        };
+
+        async function imgToBlob(mask) {
+            return new Promise((resolve) => {
+                mask.toBlob(resolve, 'image/png');
+            });
+        }
+    </script>
+</body>
+</html>
+
+
