@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>GCam Web Pro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #000;
+            color: white;
+            overflow: hidden;
+            font-family: sans-serif;
+        }
+        #video-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #111;
+        }
+        video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .controls-overlay {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 20px;
+            pointer-events: none;
+        }
+        .controls-overlay * {
+            pointer-events: auto;
+        }
+        .shutter-btn {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            border: 4px solid white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.2);
+            transition: all 0.2s;
+        }
+        .shutter-btn:active {
+            transform: scale(0.9);
+            background: white;
+        }
+        .shutter-inner {
+            width: 54px;
+            height: 54px;
+            border-radius: 50%;
+            background: white;
+        }
+        .settings-panel {
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(10px);
+            border-radius: 20px 20px 0 0;
+            transform: translateY(100%);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .settings-panel.open {
+            transform: translateY(0);
+        }
+        .filter-sepia { filter: sepia(1); }
+        .filter-grayscale { filter: grayscale(1); }
+        .filter-saturate { filter: saturate(2); }
+        .filter-invert { filter: invert(1); }
+        .filter-warm { filter: sepia(0.3) saturate(1.5); }
+    </style>
+</head>
+<body>
+
+<div id="video-container">
+    <video id="webcam" autoplay playsinline></video>
+    
+    <!-- UI Overlay -->
+    <div class="controls-overlay">
+        <!-- Top Bar -->
+        <div class="flex justify-between items-center text-white">
+            <button onclick="toggleSettings()" class="p-2 bg-black/40 rounded-full">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.1a2 2 0 0 1-1-1.72v-.51a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+            <div id="status" class="text-xs font-mono bg-black/40 px-3 py-1 rounded-full">RAW 12MP</div>
+            <button onclick="switchCamera()" class="p-2 bg-black/40 rounded-full">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 2 19 19"/><path d="M20.45 14.72A9 9 0 1 0 5.28 4.55"/><path d="M3 7V2h5"/><path d="M21 17v5h-5"/></svg>
+            </button>
+        </div>
+
+        <!-- Zoom Slider -->
+        <div class="flex flex-col items-center gap-4 mb-4">
+            <input type="range" id="zoomRange" min="1" max="5" step="0.1" value="1" 
+                   class="w-48 h-1 bg-white/30 rounded-lg appearance-none cursor-pointer">
+            <span class="text-sm font-bold shadow-lg" id="zoomVal">1.0x</span>
+        </div>
+
+        <!-- Bottom Controls -->
+        <div class="flex justify-around items-center pb-8">
+            <div id="gallery-preview" class="w-12 h-12 rounded-lg border-2 border-white/20 bg-gray-800 overflow-hidden flex items-center justify-center">
+                <span class="text-[10px] text-gray-500">No Image</span>
+            </div>
+            
+            <button onclick="takeSnapshot()" class="shutter-btn">
+                <div class="shutter-inner"></div>
+            </button>
+            
+            <button onclick="openFilters()" class="p-2 bg-white/10 rounded-full">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a10 10 0 0 1 0 20v-20Z"/></svg>
+            </button>
+        </div>
+    </div>
+
+    <!-- Settings Panel -->
+    <div id="settingsPanel" class="fixed bottom-0 left-0 w-full z-50 settings-panel p-6">
+        <div class="w-12 h-1.5 bg-white/20 rounded-full mx-auto mb-6" onclick="toggleSettings()"></div>
+        <h2 class="text-xl font-bold mb-4">Pengaturan Kamera</h2>
+        
+        <div class="space-y-6">
+            <div>
+                <label class="block text-sm text-gray-400 mb-2">Kualitas & Resolusi</label>
+                <div class="flex gap-2">
+                    <button class="bg-blue-600 px-4 py-2 rounded-lg text-sm" onclick="setRes('max')">Maksimal (4K/HD)</button>
+                    <button class="bg-white/10 px-4 py-2 rounded-lg text-sm" onclick="setRes('standard')">Standar</button>
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-sm text-gray-400 mb-2">Filter Warna</label>
+                <div class="flex gap-4 overflow-x-auto pb-2 no-scrollbar">
+                    <button onclick="applyFilter('none')" class="flex-shrink-0 w-16 h-16 bg-gray-700 rounded-lg border border-white/20 text-[10px] flex items-end p-1">Normal</button>
+                    <button onclick="applyFilter('sepia')" class="flex-shrink-0 w-16 h-16 bg-amber-900/50 rounded-lg border border-white/20 text-[10px] flex items-end p-1">Vintage</button>
+                    <button onclick="applyFilter('grayscale')" class="flex-shrink-0 w-16 h-16 bg-gray-500/50 rounded-lg border border-white/20 text-[10px] flex items-end p-1">B&W</button>
+                    <button onclick="applyFilter('warm')" class="flex-shrink-0 w-16 h-16 bg-orange-400/50 rounded-lg border border-white/20 text-[10px] flex items-end p-1">Warm</button>
+                    <button onclick="applyFilter('invert')" class="flex-shrink-0 w-16 h-16 bg-white/50 rounded-lg border border-white/20 text-[10px] flex items-end p-1">Invert</button>
+                </div>
+            </div>
+
+            <button onclick="toggleSettings()" class="w-full py-4 bg-white/10 rounded-xl font-bold mt-4">Tutup</button>
+        </div>
+    </div>
+</div>
+
+<canvas id="canvas" class="hidden"></canvas>
+
+<script>
+    const video = document.getElementById('webcam');
+    const canvas = document.getElementById('canvas');
+    const settingsPanel = document.getElementById('settingsPanel');
+    const zoomRange = document.getElementById('zoomRange');
+    const zoomVal = document.getElementById('zoomVal');
+    const galleryPreview = document.getElementById('gallery-preview');
+
+    let currentStream = null;
+    let facingMode = "environment"; // default kamera belakang
+    let currentFilter = 'none';
+
+    async function initCamera() {
+        if (currentStream) {
+            currentStream.getTracks().forEach(track => track.stop());
+        }
+
+        const constraints = {
+            video: {
+                facingMode: facingMode,
+                width: { ideal: 4096 },
+                height: { ideal: 2160 }
+            },
+            audio: false
+        };
+
+        try {
+            currentStream = await navigator.mediaDevices.getUserMedia(constraints);
+            video.srcObject = currentStream;
+            
+            // Zoom Support (hanya beberapa browser mobile mendukung ini)
+            const track = currentStream.getVideoTracks()[0];
+            const capabilities = track.getCapabilities();
+            
+            if (capabilities.zoom) {
+                zoomRange.min = capabilities.zoom.min;
+                zoomRange.max = capabilities.zoom.max;
+                zoomRange.step = capabilities.zoom.step;
+                
+                zoomRange.oninput = (e) => {
+                    const zoom = e.target.value;
+                    zoomVal.innerText = parseFloat(zoom).toFixed(1) + 'x';
+                    track.applyConstraints({ advanced: [{ zoom: zoom }] });
+                };
+            } else {
+                // Digital Zoom fallback (CSS)
+                zoomRange.oninput = (e) => {
+                    const zoom = e.target.value;
+                    zoomVal.innerText = parseFloat(zoom).toFixed(1) + 'x';
+                    video.style.transform = `scale(${zoom})`;
+                };
+            }
+
+        } catch (err) {
+            console.error("Gagal akses kamera: ", err);
+            document.body.innerHTML = `<div class="p-10 text-center">Izin kamera ditolak atau tidak ditemukan. <br><br> <button onclick="location.reload()" class="bg-blue-500 p-2 rounded">Coba Lagi</button></div>`;
+        }
+    }
+
+    function toggleSettings() {
+        settingsPanel.classList.toggle('open');
+    }
+
+    function openFilters() {
+        toggleSettings(); // Langsung buka panel pengaturan yang berisi filter
+    }
+
+    function switchCamera() {
+        facingMode = facingMode === "user" ? "environment" : "user";
+        initCamera();
+    }
+
+    function applyFilter(filter) {
+        video.className = "";
+        if (filter !== 'none') {
+            video.classList.add(`filter-${filter}`);
+        }
+        currentFilter = filter;
+    }
+
+    function takeSnapshot() {
+        const context = canvas.getContext('2d');
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        
+        // Terapkan filter ke canvas jika ada
+        if (currentFilter === 'sepia') context.filter = 'sepia(1)';
+        else if (currentFilter === 'grayscale') context.filter = 'grayscale(1)';
+        else if (currentFilter === 'warm') context.filter = 'sepia(0.3) saturate(1.5)';
+        else if (currentFilter === 'invert') context.filter = 'invert(1)';
+        
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+        
+        const data = canvas.toDataURL('image/jpeg');
+        
+        // Update Preview
+        galleryPreview.innerHTML = `<img src="${data}" class="w-full h-full object-cover">`;
+        
+        // Berikan efek flash
+        video.classList.add('opacity-50');
+        setTimeout(() => video.classList.remove('opacity-50'), 100);
+
+        // Download otomatis (Opsional)
+        const link = document.createElement('a');
+        link.download = `IMG_GCAM_${Date.now()}.jpg`;
+        link.href = data;
+        link.click();
+    }
+
+    function setRes(type) {
+        alert("Resolusi diatur ke " + type + ". Me-restart stream...");
+        initCamera();
+        toggleSettings();
+    }
+
+    window.onload = initCamera;
+</script>
+
+</body>
+</html>
+
+
