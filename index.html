@@ -2,32 +2,367 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GameBetaBYrenno</title>
-    <link rel="stylesheet" href="style.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Infinite Tic Tac Toe - Retro Music Edition</title>
+    <style>
+        :root {
+            --bg: #0f172a;
+            --card: #1e293b;
+            --x-color: #f43f5e;
+            --o-color: #10b981;
+            --accent: #6366f1;
+            --text: #f8fafc;
+        }
+
+        * {
+            box-sizing: border-box;
+            touch-action: manipulation;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        .header-box {
+            margin-bottom: 20px;
+        }
+
+        .music-control {
+            margin-bottom: 15px;
+        }
+
+        .music-btn {
+            background: #334155;
+            border: 1px solid var(--accent);
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+
+        .music-btn.on { background: var(--accent); }
+
+        .mode-selector {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .mode-btn {
+            flex: 1;
+            padding: 10px;
+            border: 2px solid var(--accent);
+            background: transparent;
+            color: white;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.3s;
+        }
+
+        .mode-btn.active {
+            background: var(--accent);
+            box-shadow: 0 0 15px rgba(99, 102, 241, 0.4);
+        }
+
+        .status-box {
+            background: var(--card);
+            padding: 15px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            border: 1px solid #334155;
+        }
+
+        .board {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            margin-bottom: 25px;
+        }
+
+        .cell {
+            background: var(--card);
+            border-radius: 15px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 3rem;
+            font-weight: 800;
+            cursor: pointer;
+            position: relative;
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 6px 0 rgba(0,0,0,0.3);
+            border: 1px solid #334155;
+        }
+
+        .cell:active {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 rgba(0,0,0,0.3);
+        }
+
+        .cell.x { color: var(--x-color); }
+        .cell.o { color: var(--o-color); }
+
+        .pop { animation: popIn 0.3s forwards; }
+        @keyframes popIn {
+            0% { transform: scale(0.5); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .fading { animation: blink 0.8s infinite alternate; }
+        @keyframes blink {
+            from { opacity: 1; }
+            to { opacity: 0.3; }
+        }
+
+        .reset-btn {
+            width: 100%;
+            padding: 15px;
+            background: #f43f5e;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 0 #9f1239;
+        }
+
+        .winner-cell {
+            background: #4ade80 !important;
+            color: #064e3b !important;
+        }
+
+        .hidden { display: none; }
+    </style>
 </head>
 <body>
 
-    <div class="info">
-        <h1>Game Beta By Reno</h1>
-        <p>Setiap 3 Kali Summon Otomatis akan hilang Summon pertama<br>Selamat Bermain</p>
-        <div class="status-box" id="status">Giliran: <b id="turnText">X</b></div>
+    <div class="container">
+        <div class="header-box">
+            <h1>Infinite Toe</h1>
+            <div class="music-control">
+                <button id="musicToggle" class="music-btn">🎵 Musik: OFF</button>
+            </div>
+        </div>
+
+        <div class="mode-selector">
+            <button id="modeFree" class="mode-btn active">BEBAS</button>
+            <button id="modeTimer" class="mode-btn">TIMER</button>
+        </div>
+
+        <div class="status-box">
+            <span id="statusText">Giliran: <b id="turnText" style="color:var(--x-color)">X</b></span>
+            <div id="timerContainer" class="hidden">Waktu: <span id="timeLeft">30</span>s</div>
+        </div>
+
+        <div class="board" id="board">
+            <div class="cell" data-index="0"></div>
+            <div class="cell" data-index="1"></div>
+            <div class="cell" data-index="2"></div>
+            <div class="cell" data-index="3"></div>
+            <div class="cell" data-index="4"></div>
+            <div class="cell" data-index="5"></div>
+            <div class="cell" data-index="6"></div>
+            <div class="cell" data-index="7"></div>
+            <div class="cell" data-index="8"></div>
+        </div>
+
+        <button class="reset-btn" id="resetBtn">ULANG PERMAINAN</button>
     </div>
 
-    <div class="board" id="board">
-        <div class="cell" data-index="0"></div>
-        <div class="cell" data-index="1"></div>
-        <div class="cell" data-index="2"></div>
-        <div class="cell" data-index="3"></div>
-        <div class="cell" data-index="4"></div>
-        <div class="cell" data-index="5"></div>
-        <div class="cell" data-index="6"></div>
-        <div class="cell" data-index="7"></div>
-        <div class="cell" data-index="8"></div>
-    </div>
+    <script>
+        const cells = document.querySelectorAll('.cell');
+        const turnText = document.getElementById('turnText');
+        const statusText = document.getElementById('statusText');
+        const timeLeftDisplay = document.getElementById('timeLeft');
+        const timerContainer = document.getElementById('timerContainer');
+        const resetBtn = document.getElementById('resetBtn');
+        const musicToggle = document.getElementById('musicToggle');
 
-    <button class="reset-btn" id="resetBtn">Reset Game</button>
+        let currentPlayer = 'X';
+        let gameActive = true;
+        let movesX = []; 
+        let movesO = []; 
+        let isTimerMode = false;
+        let timerInterval;
+        let timeLeft = 30;
 
-    <script src="script.js"></script>
+        // AUDIO SYSTEM
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        let musicPlaying = false;
+        let musicNodes = [];
+
+        function playSfx(freq, type = 'sine', duration = 0.1) {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + duration);
+        }
+
+        // Retro Background Music Generator
+        const melody = [
+            261.63, 329.63, 392.00, 523.25, 
+            349.23, 440.00, 523.25, 698.46,
+            392.00, 493.88, 587.33, 783.99,
+            329.63, 415.30, 493.88, 659.25
+        ];
+        let noteIndex = 0;
+        let musicInterval;
+
+        function startMusic() {
+            if (musicInterval) return;
+            musicInterval = setInterval(() => {
+                if (!musicPlaying) return;
+                const freq = melody[noteIndex % melody.length];
+                playSfx(freq, 'square', 0.15);
+                noteIndex++;
+            }, 250);
+        }
+
+        musicToggle.onclick = () => {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            musicPlaying = !musicPlaying;
+            musicToggle.innerText = musicPlaying ? "🎵 Musik: ON" : "🎵 Musik: OFF";
+            musicToggle.classList.toggle('on', musicPlaying);
+            if (musicPlaying) startMusic();
+        };
+
+        // GAME LOGIC
+        document.getElementById('modeFree').onclick = () => switchMode(false);
+        document.getElementById('modeTimer').onclick = () => switchMode(true);
+
+        function switchMode(timerOn) {
+            isTimerMode = timerOn;
+            document.getElementById('modeFree').classList.toggle('active', !timerOn);
+            document.getElementById('modeTimer').classList.toggle('active', timerOn);
+            timerContainer.classList.toggle('hidden', !timerOn);
+            resetGame();
+        }
+
+        function startTimer() {
+            clearInterval(timerInterval);
+            if (!isTimerMode || !gameActive) return;
+            timeLeft = 30;
+            timeLeftDisplay.innerText = timeLeft;
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                timeLeftDisplay.innerText = timeLeft;
+                if (timeLeft <= 5 && timeLeft > 0) playSfx(200, 'sine', 0.05);
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    const winner = currentPlayer === 'X' ? 'O' : 'X';
+                    endGame(winner, "Waktu habis!");
+                }
+            }, 1000);
+        }
+
+        function handleCellClick(e) {
+            const cell = e.target;
+            const index = parseInt(cell.dataset.index);
+            if (cell.innerText !== '' || !gameActive) return;
+
+            playSfx(currentPlayer === 'X' ? 523.25 : 659.25, 'triangle', 0.1);
+
+            if (currentPlayer === 'X') {
+                movesX.push(index);
+                if (movesX.length > 3) removeSymbol(movesX.shift());
+            } else {
+                movesO.push(index);
+                if (movesO.length > 3) removeSymbol(movesO.shift());
+            }
+
+            cell.innerText = currentPlayer;
+            cell.classList.add(currentPlayer.toLowerCase(), 'pop');
+
+            if (checkWin()) {
+                endGame(currentPlayer);
+            } else {
+                currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+                updateTurnUI();
+                startTimer();
+            }
+        }
+
+        function removeSymbol(index) {
+            const cell = cells[index];
+            cell.innerText = '';
+            cell.classList.remove('x', 'o', 'pop', 'fading');
+            playSfx(100, 'sawtooth', 0.2);
+        }
+
+        function updateTurnUI() {
+            turnText.innerText = currentPlayer;
+            turnText.style.color = currentPlayer === 'X' ? 'var(--x-color)' : 'var(--o-color)';
+            cells.forEach(c => c.classList.remove('fading'));
+            const playerMoves = (currentPlayer === 'X') ? movesX : movesO;
+            if (playerMoves.length === 3) cells[playerMoves[0]].classList.add('fading');
+        }
+
+        function checkWin() {
+            const patterns = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+            return patterns.some(p => {
+                if (cells[p[0]].innerText === '') return false;
+                if (cells[p[0]].innerText === cells[p[1]].innerText && 
+                    cells[p[0]].innerText === cells[p[2]].innerText) {
+                    p.forEach(idx => cells[idx].classList.add('winner-cell'));
+                    return true;
+                }
+                return false;
+            });
+        }
+
+        function endGame(winner, reason = "") {
+            gameActive = false;
+            clearInterval(timerInterval);
+            cells.forEach(c => c.classList.remove('fading'));
+            playSfx(880, 'sine', 1);
+            const msg = reason ? `${reason}<br>` : "";
+            statusText.innerHTML = `${msg}🏆 MENANG: <span style="color:gold">${winner}</span> 🏆`;
+        }
+
+        function resetGame() {
+            clearInterval(timerInterval);
+            movesX = []; movesO = [];
+            currentPlayer = 'X';
+            gameActive = true;
+            statusText.innerHTML = `Giliran: <b id="turnText" style="color:var(--x-color)">X</b>`;
+            setTimeout(() => { window.turnText = document.getElementById('turnText'); }, 0);
+            cells.forEach(c => {
+                c.innerText = '';
+                c.classList.remove('x', 'o', 'pop', 'fading', 'winner-cell');
+            });
+            if (isTimerMode) startTimer();
+        }
+
+        cells.forEach(cell => cell.addEventListener('click', handleCellClick));
+        resetBtn.addEventListener('click', resetGame);
+    </script>
 </body>
 </html>
+
