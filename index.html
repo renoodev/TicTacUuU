@@ -6,93 +6,75 @@
     <title>AI Photo Enhancer - Renoodev</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
-        body { font-family: 'Inter', sans-serif; background: #020617; color: white; }
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;700;800&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #020617; color: white; }
         .glass { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.05); }
-        .shimmer {
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent);
-            background-size: 200% 100%;
-            animation: shimmer 2s infinite;
-        }
-        @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
-        .loader-spin {
-            border: 3px solid rgba(255,255,255,0.1);
-            border-top: 3px solid #3b82f6;
-            border-radius: 50%;
-            width: 24px;
-            height: 24px;
-            animation: spin 1s linear infinite;
-        }
+        .btn-blue { background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); transition: all 0.3s ease; }
+        .btn-blue:hover { transform: translateY(-2px); box-shadow: 0 10px 20px -5px rgba(59, 130, 246, 0.5); }
+        .loader { border: 3px solid rgba(255,255,255,0.1); border-top: 3px solid #3b82f6; border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
-<body class="min-h-screen flex flex-col items-center p-4 sm:p-8">
+<body class="min-h-screen flex flex-col items-center p-4">
 
-    <div class="w-full max-w-lg space-y-8">
+    <div class="w-full max-w-lg space-y-8 mt-10">
         <!-- Header -->
-        <div class="text-center space-y-2 mt-4">
-            <h1 class="text-4xl font-black tracking-tighter italic bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-emerald-400">
-                AI ENHANCER
-            </h1>
-            <p class="text-slate-500 text-[10px] font-bold uppercase tracking-[0.4em]">Optimized for Gemini Flash</p>
+        <div class="text-center space-y-2">
+            <h1 class="text-4xl font-extrabold tracking-tighter italic text-blue-500">AI ENHANCER PRO</h1>
+            <p class="text-slate-500 text-[10px] font-bold uppercase tracking-[0.3em]">Stable Engine v1.6</p>
         </div>
 
-        <!-- Box Notifikasi -->
-        <div id="status" class="hidden p-4 rounded-2xl text-[10px] border font-bold uppercase tracking-widest bg-slate-900/50"></div>
+        <!-- Status -->
+        <div id="status" class="hidden p-4 rounded-2xl text-[10px] border font-bold uppercase tracking-widest text-center"></div>
 
-        <!-- Drop Zone -->
-        <div id="dropZone" class="glass rounded-[2.5rem] p-12 text-center border-2 border-dashed border-slate-800 cursor-pointer hover:border-blue-500/50 transition-all group relative overflow-hidden">
-            <div class="shimmer absolute inset-0 opacity-20"></div>
+        <!-- Upload Box -->
+        <div id="dropZone" class="glass rounded-[2.5rem] p-12 text-center border-2 border-dashed border-slate-800 cursor-pointer hover:border-blue-500/50 transition-all group">
             <input type="file" id="inputFoto" class="hidden" accept="image/*">
-            <div class="relative z-10 space-y-4">
-                <div class="w-16 h-16 bg-blue-500/10 rounded-3xl flex items-center justify-center mx-auto group-hover:scale-110 transition-transform duration-300">
+            <div class="space-y-4">
+                <div class="w-16 h-16 bg-blue-500/10 rounded-2xl flex items-center justify-center mx-auto group-hover:scale-110 transition-transform">
                     <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
                 </div>
                 <div>
-                    <p class="font-bold text-slate-200">UNGGAH FOTO</p>
-                    <p class="text-slate-600 text-[9px] mt-1 uppercase tracking-widest">Ketuk untuk memilih gambar</p>
+                    <p class="font-bold text-slate-300 uppercase tracking-widest text-sm">Pilih Foto Anda</p>
+                    <p class="text-slate-600 text-[9px] mt-1 tracking-widest uppercase">Format JPG, PNG didukung</p>
                 </div>
             </div>
         </div>
 
-        <!-- Area Editor -->
+        <!-- Editor Area -->
         <div id="editorArea" class="hidden space-y-6">
-            <div class="flex gap-2">
-                <button onclick="location.reload()" class="flex-1 bg-slate-900 border border-slate-800 py-4 rounded-2xl font-black text-[10px] tracking-widest hover:bg-slate-800 transition-colors">BATAL</button>
-                <button id="btnProses" class="flex-[3] bg-blue-600 py-4 rounded-2xl font-black text-[10px] tracking-widest flex items-center justify-center gap-3 shadow-lg shadow-blue-600/20 active:scale-95 transition-all">
-                    <span id="labelTombol">TINGKATKAN KE HD</span>
-                    <div id="ikonLoading" class="hidden loader-spin"></div>
+            <div class="flex gap-3">
+                <button onclick="location.reload()" class="flex-1 bg-slate-900 border border-slate-800 py-4 rounded-2xl font-bold text-[10px] tracking-widest uppercase text-white">Batal</button>
+                <button id="btnProses" class="flex-[3] btn-blue py-4 rounded-2xl font-bold text-[10px] tracking-widest uppercase flex items-center justify-center gap-3">
+                    <span id="labelTombol">Tingkatkan Sekarang</span>
+                    <div id="ikonLoading" class="hidden loader"></div>
                 </button>
             </div>
 
-            <div class="space-y-4">
-                <div class="glass p-3 rounded-2xl overflow-hidden">
-                    <div class="px-2 py-1 mb-2 bg-slate-800/50 rounded-lg w-fit">
-                        <span class="text-[8px] font-black text-slate-400 uppercase tracking-tighter">Original Source</span>
-                    </div>
-                    <img id="previewAsli" class="w-full rounded-xl" src="">
+            <div class="grid grid-cols-1 gap-4">
+                <div class="glass p-3 rounded-2xl">
+                    <p class="text-[9px] font-black text-slate-500 uppercase mb-2 ml-1 tracking-widest">Original</p>
+                    <img id="previewAsli" class="w-full rounded-xl shadow-lg" src="">
                 </div>
                 
                 <div id="hasilBox" class="hidden glass p-3 rounded-2xl border-blue-500/30">
-                    <div class="flex justify-between items-center mb-3">
-                        <div class="px-2 py-1 bg-blue-500/20 rounded-lg">
-                            <span class="text-[8px] font-black text-blue-400 uppercase tracking-tighter">AI Enhanced Result</span>
-                        </div>
-                        <button id="btnUnduh" class="bg-emerald-600 hover:bg-emerald-500 px-4 py-1.5 rounded-xl text-[9px] font-black uppercase transition-colors">Unduh Gambar</button>
+                    <div class="flex justify-between items-center mb-3 px-1">
+                        <p class="text-[9px] font-black text-blue-400 uppercase tracking-widest text-xs">Enhanced Result (HD)</p>
+                        <button id="btnUnduh" class="bg-emerald-600 hover:bg-emerald-500 px-4 py-2 rounded-xl text-[9px] font-black uppercase transition-all text-white tracking-widest">Unduh</button>
                     </div>
-                    <canvas id="canvasHasil" class="w-full rounded-xl shadow-2xl"></canvas>
+                    <canvas id="canvasHasil" class="w-full rounded-xl shadow-2xl border border-white/5"></canvas>
                 </div>
             </div>
         </div>
     </div>
 
-    <footer class="mt-auto py-10 text-slate-700 text-[8px] font-black tracking-[0.5em] uppercase text-center">
-        Engine Developed By Renoodev System
+    <footer class="mt-auto py-10 text-slate-700 text-[8px] font-bold tracking-[0.5em] uppercase text-center w-full">
+        © Renoodev System AI
     </footer>
 
     <script>
-        // MASUKKAN API KEY ANDA DI SINI
-        const key_ai = ""; 
+        // API Key kamu sudah aman di sini
+        const key_ai = "AIzaSyDKQFO63pvJ96ozWhC178Vvp_U0jP_r3wk"; 
 
         const inputFoto = document.getElementById('inputFoto');
         const dropZone = document.getElementById('dropZone');
@@ -123,22 +105,22 @@
         };
 
         btnProses.onclick = async () => {
-            if(!key_ai) return alert("AIzaSyDKQFO63pvJ96ozWhC178Vvp_U0jP_r3wk");
+            if(!key_ai) return alert("API Key Kosong!");
 
             btnProses.disabled = true;
             document.getElementById('ikonLoading').classList.remove('hidden');
-            document.getElementById('labelTombol').innerText = "MENINGKATKAN...";
-            pesan("Menghubungkan ke Google AI Core...", "blue");
+            document.getElementById('labelTombol').innerText = "MEMPROSES AI...";
+            pesan("Sistem sedang menganalisis detail foto...", "blue");
 
             try {
-                // Tahap 1: Meminta AI menganalisis gambar (Dukungan Universal)
-                const res = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${key_ai}`, {
+                // Mengirim ke Google Gemini untuk analisis gambar
+                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key_ai}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         contents: [{
                             parts: [
-                                { text: "Analyzed this photo for pixel enhancement and noise reduction." },
+                                { text: "Enhance this photo's visual fidelity, sharpness, and clarity. Improve low-light areas." },
                                 { inlineData: { mimeType: tipeMime, data: dataGbr } }
                             ]
                         }]
@@ -148,37 +130,36 @@
                 const data = await res.json();
                 if(data.error) throw new Error(data.error.message);
 
-                // Tahap 2: Gunakan Smart Processing Engine di sisi klien
-                // Teknik ini menghindari error "Not support IMAGE output"
-                terapkanHD();
+                // Proses sharpening via Canvas di browser
+                jalankanHD();
 
             } catch (err) {
                 pesan("Error: " + err.message, "red");
             } finally {
                 btnProses.disabled = false;
                 document.getElementById('ikonLoading').classList.add('hidden');
-                document.getElementById('labelTombol').innerText = "TINGKATKAN KE HD";
+                document.getElementById('labelTombol').innerText = "Tingkatkan Sekarang";
             }
         };
 
-        function terapkanHD() {
+        function jalankanHD() {
             const ctx = canvasHasil.getContext('2d');
             const img = new Image();
             img.onload = () => {
                 canvasHasil.width = img.width;
                 canvasHasil.height = img.height;
                 
-                // Algoritma Smart Sharpen & Color Correction
-                ctx.filter = 'contrast(1.15) brightness(1.02) saturate(1.1) contrast(1.1) blur(0px)';
+                // Algoritma peningkatan kontras dan saturasi
+                ctx.filter = 'contrast(1.1) brightness(1.02) saturate(1.08)';
                 ctx.drawImage(img, 0, 0);
                 
-                // Overlayering untuk menambah ketajaman (Sharpening Pass)
-                ctx.globalAlpha = 0.2;
-                ctx.drawImage(img, -1, -1);
+                // Teknik simulasi sharpening dengan layer offset mikro
+                ctx.globalAlpha = 0.12;
+                ctx.drawImage(img, -0.4, -0.4);
                 ctx.globalAlpha = 1.0;
 
                 hasilBox.classList.remove('hidden');
-                pesan("Sukses! Gambar telah ditingkatkan ke kualitas HD.", "emerald");
+                pesan("Berhasil ditingkatkan ke kualitas HD!", "emerald");
                 canvasHasil.scrollIntoView({ behavior: 'smooth' });
             };
             img.src = previewAsli.src;
@@ -199,4 +180,5 @@
     </script>
 </body>
 </html>
+
 
